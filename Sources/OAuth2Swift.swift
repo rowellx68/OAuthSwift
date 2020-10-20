@@ -113,17 +113,27 @@ open class OAuth2Swift: OAuthSwift {
                         return
                     }
                 }
-                let callbackURLEncoded: URL?
-                if let callbackURL = callbackURL {
-                    callbackURLEncoded = callbackURL.encodedURL // XXX do not known why to re-encode, maybe if string only?
-                } else {
-                    callbackURLEncoded = nil
+
+                if let callback = callbackURL {
+                    let cbURL = URL(string: callback.string)
+                    
+                    print(cbURL)
+
+                    if let handle = this.postOAuthAccessTokenWithRequestToken(
+                        byCode: code.safeStringByRemovingPercentEncoding,
+                        callbackURL: cbURL, headers: headers, completionHandler: completion) {
+                        this.putHandle(handle, withKey: UUID().uuidString)
+                    }
                 }
-                if let handle = this.postOAuthAccessTokenWithRequestToken(
-                    byCode: code.safeStringByRemovingPercentEncoding,
-                    callbackURL: callbackURLEncoded, headers: headers, completionHandler: completion) {
-                    this.putHandle(handle, withKey: UUID().uuidString)
+                else {
+                    if let handle = this.postOAuthAccessTokenWithRequestToken(
+                        byCode: code.safeStringByRemovingPercentEncoding,
+                        callbackURL: nil, headers: headers, completionHandler: completion) {
+                        this.putHandle(handle, withKey: UUID().uuidString)
+                    }
                 }
+
+                
             } else if let error = responseParameters["error"] {
                 let otherErrorBlock = {
                     let description = responseParameters["error_description"] ?? ""
